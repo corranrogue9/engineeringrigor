@@ -264,10 +264,74 @@ namespace ConsoleApp3
                     break;
                 }
             }
-                
 
             var samplePropertyString = string.Join(",", toWrite);
             ////Console.WriteLine(samplePropertyString);
+            return samplePropertyString;
+        }
+
+        public static string DoWork10(Schema entitySchema)
+        {
+            string samplePropertyString = string.Empty;
+            var schemas = entitySchema
+                .ToLinkedList(schema => schema.BaseResourceSchema);
+            foreach (var schema in schemas)
+            {
+                var properties = schema
+                    .GetAllProperties()
+                    .Where(property => property.Syntax != EdmTypeKind.EntityReference)
+                    .Select(property => property.Name)
+                    .Take(2);
+                int count = 0;
+                foreach (var property in properties)
+                {
+                    if (samplePropertyString == string.Empty)
+                    {
+                        samplePropertyString = property;
+                    }
+                    else
+                    {
+                        samplePropertyString += "," + property;
+                    }
+
+                    count++;
+
+                    if (count == 2)
+                    {
+                        break;
+                    }
+                }
+
+                if (count > 0)
+                {
+                    break;
+                }
+            }
+
+            return samplePropertyString;
+        }
+
+        public static string DoWork11(Schema entitySchema)
+        {
+            string samplePropertyString = string.Empty;
+            var properties = entitySchema
+                .ToLinkedList(schema => schema.BaseResourceSchema)
+                .SelectMany(schema => schema.GetAllProperties())
+                .Where(property => property.Syntax != EdmTypeKind.EntityReference)
+                .Select(property => property.Name)
+                .Take(2);
+            foreach (var property in properties)
+            {
+                if (samplePropertyString == string.Empty)
+                {
+                    samplePropertyString = property;
+                }
+                else
+                {
+                    samplePropertyString += "," + property;
+                }
+            }
+
             return samplePropertyString;
         }
 
@@ -326,7 +390,7 @@ namespace ConsoleApp3
                 new Property(EdmTypeKind.Other, "asdf"),
             });
 
-            int iterations = 10000000;
+            int iterations = 1000000;
             var stopwatch = Stopwatch.StartNew();
 
             for (int i = 0; i < iterations; ++i)
@@ -422,6 +486,20 @@ namespace ConsoleApp3
             }
 
             stopwatch = Write(stopwatch, doWorkElapsed, 9);
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                Container.DoWork10(schema);
+            }
+
+            stopwatch = Write(stopwatch, doWorkElapsed, 10);
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                Container.DoWork11(schema);
+            }
+
+            stopwatch = Write(stopwatch, doWorkElapsed, 11);
         }
 
         private static Stopwatch Write(Stopwatch stopwatch, long baseTicks, int variantIndex)
