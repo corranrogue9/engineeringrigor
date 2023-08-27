@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics;
 using System.Reflection.Metadata;
+using static ConsoleApp3.ListyExtensions;
 
 namespace ConsoleApp3
 {
@@ -380,10 +381,651 @@ namespace ConsoleApp3
         }
     }
 
+    public static class ListyExtensions
+    {
+        public static void DoWork(IEnumerable<string> data)
+        {
+            foreach (var element in data.ToListy())
+            {
+            }
+        }
+
+        public static ListyEnumerable<T> ToListy<T>(this IEnumerable<T> self)
+        {
+            return new ListyEnumerable<T>(self);
+        }
+
+        public struct ListyEnumerable<T> : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> possibleList;
+
+            public ListyEnumerable(IEnumerable<T> possibleList)
+            {
+                this.possibleList = possibleList;
+            }
+
+            public ListyEnumerator<T> GetEnumerator()
+            {
+                return new ListyEnumerator<T>(this.possibleList);
+            }
+
+            IEnumerator<T> IEnumerable<T>.GetEnumerator()
+            {
+                return this.possibleList.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return this.possibleList.GetEnumerator();
+            }
+        }
+
+        public struct ListyEnumerator<T> : IEnumerator<T>
+        {
+            private List<T>.Enumerator list;
+
+            private IEnumerator<T>? enumerable;
+
+            public ListyEnumerator(IEnumerable<T> possibleList)
+            {
+                if (possibleList is List<T> list)
+                {
+                    this.list = list.GetEnumerator();
+                }
+                else
+                {
+                    this.enumerable = possibleList.GetEnumerator();
+                }
+            }
+
+            public T Current
+            {
+                get
+                {
+                    if (this.enumerable == null)
+                    {
+                        return this.list.Current;
+                    }
+                    else
+                    {
+                        return this.enumerable.Current;
+                    }
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                if (this.enumerable == null)
+                {
+                    this.list.Dispose();
+                }
+                else
+                {
+                    this.enumerable.Dispose();
+                }
+            }
+
+            public bool MoveNext()
+            {
+                if (this.enumerable == null)
+                {
+                    return this.list.MoveNext();
+                }
+                else
+                {
+                    return this.enumerable.MoveNext();
+                }
+            }
+
+            public void Reset()
+            {
+                if (this.enumerable != null)
+                {
+                    this.enumerable.Reset();
+                }
+            }
+        }
+
+        public static ListyEnumerable2<T> ToListy2<T>(this IEnumerable<T> self)
+        {
+            return new ListyEnumerable2<T>(self);
+        }
+
+        public struct ListyEnumerable2<T> : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> possibleList;
+
+            public ListyEnumerable2(IEnumerable<T> possibleList)
+            {
+                this.possibleList = possibleList;
+            }
+
+            public ListyEnumerator2<T> GetEnumerator()
+            {
+                if (this.possibleList is List<T> list)
+                {
+                    return new ListyEnumerator2<T>(list);
+                }
+
+                return new ListyEnumerator2<T>(this.possibleList);
+            }
+
+            IEnumerator<T> IEnumerable<T>.GetEnumerator()
+            {
+                return this.possibleList.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return this.possibleList.GetEnumerator();
+            }
+        }
+
+        public struct ListyEnumerator2<T> : IEnumerator<T>
+        {
+            private List<T>.Enumerator list;
+
+            private IEnumerator<T> enumerable;
+
+            public ListyEnumerator2(List<T> list)
+            {
+                this.list = list.GetEnumerator();
+            }
+
+            public ListyEnumerator2(IEnumerable<T> enumerable)
+            {
+                this.enumerable = enumerable.GetEnumerator();
+            }
+
+            public T Current
+            {
+                get
+                {
+                    return this.list.Current;
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                this.list.Dispose();
+            }
+
+            public bool MoveNext()
+            {
+                return this.list.MoveNext();
+            }
+
+            public void Reset()
+            {
+                if (this.enumerable != null)
+                {
+                    this.enumerable.Reset();
+                }
+            }
+        }
+    }
+
     internal class Program
     {
+        static void DoWork(IEnumerable<string> data)
+        {
+            var count = 0;
+            foreach (var element in data)
+            {
+                ++count;
+            }
+        }
+
+        static void DoWork2(IEnumerable<string> data)
+        {
+            var list = data as List<string>;
+            var count = 0;
+            foreach (var element in list)
+            {
+                ++count;
+            }
+        }
+
+        public struct TestEnumerator : IEnumerator<string>
+        {
+            private readonly IEnumerable<string> list;
+
+            private int index;
+
+            private readonly int version;
+
+            private string? current;
+
+            public TestEnumerator(IEnumerable<string> list)
+            {
+                this.list = list;
+                this.index = -1;
+                this.version = 5;
+                this.current = default;
+            }
+
+            public string Current
+            {
+                get
+                {
+                    switch (index)
+                    {
+                        case 0:
+                            return this.current;
+                        default:
+                            throw new Exception();
+                    }
+
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                ++this.index;
+                this.current = "asdf";
+                return this.index == 0;
+            }
+
+            public void Reset()
+            {
+            }
+        }
+
+        static void DoWork3(IEnumerable<string> data)
+        {
+            var count = 0;
+            var enumerator = new TestEnumerator(data);
+            try
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+            }
+        }
+
+        static void DoWork4(IEnumerable<string> data)
+        {
+            var count = 0;
+            foreach (var element in data.ToListy())
+            {
+                ++count;
+            }
+        }
+
+        public struct TestEnumerator2 : IEnumerator<string>
+        {
+            private int index = -1;
+
+            public TestEnumerator2()
+            {
+            }
+
+            public string Current
+            {
+                get
+                {
+                    if (this.index != 0)
+                    {
+                        throw new Exception();
+                    }
+
+                    return "asdf";
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                return ++this.index == 0;
+            }
+
+            public void Reset()
+            {
+            }
+        }
+
+        static void DoWork5(IEnumerable<string> data)
+        {
+            var count = 0;
+            var enumerator = new TestEnumerator2();
+            try
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+            }
+        }
+
+        static void DoWork6(IEnumerable<string> data)
+        {
+            var count = 0;
+            foreach (var element in data.ToListy2())
+            {
+                ++count;
+            }
+        }
+
+        public sealed class TestEnumeratorButAClass : IEnumerator<string>
+        {
+            private readonly IEnumerable<string> list;
+
+            private int index;
+
+            private readonly int version;
+
+            private string? current;
+
+            public TestEnumeratorButAClass(IEnumerable<string> list)
+            {
+                this.list = list;
+                this.index = -1;
+                this.version = 5;
+                this.current = default;
+            }
+
+            public string Current
+            {
+                get
+                {
+                    switch (index)
+                    {
+                        case 0:
+                            return this.current;
+                        default:
+                            throw new Exception();
+                    }
+
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                ++this.index;
+                this.current = "asdf";
+                return this.index == 0;
+            }
+
+            public void Reset()
+            {
+            }
+        }
+
+        static void DoWork7(IEnumerable<string> data)
+        {
+            var count = 0;
+            var enumerator = new TestEnumeratorButAClass(data);
+            try
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+            }
+        }
+
+        static void DoWork8(IEnumerable<string> data)
+        {
+            var count = 0;
+            using (var enumerator = new TestEnumeratorButAClass(data))
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+        }
+
+        public sealed class ListEnumeratorButAClass : IEnumerator<string>
+        {
+            private readonly List<string> list;
+
+            private int index;
+
+            private readonly int version;
+
+            private string? current;
+
+            public ListEnumeratorButAClass(List<string> list)
+            {
+                this.list = list;
+                this.index = 0;
+                this.version = 5;
+                this.current = default;
+            }
+
+            public string Current
+            {
+                get
+                {
+                    if (this.index == 0 || this.index == this.list.Count + 1)
+                    {
+                        throw new Exception();
+                    }
+
+                    return this.current;
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (this.index < this.list.Count)
+                {
+                    this.current = this.list[this.index];
+                    ++this.index;
+                    return true;
+                }
+                
+                return false;
+            }
+
+            public void Reset()
+            {
+            }
+        }
+
+        static void DoWork9(IEnumerable<string> data)
+        {
+            var list = data as List<string>;
+            var count = 0;
+            using (var enumerator = new ListEnumeratorButAClass(list))
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+        }
+
+        public sealed class ListEnumeratorButBoxed : IEnumerator<string>
+        {
+            private readonly List<string>.Enumerator list;
+
+            public ListEnumeratorButBoxed(List<string> list)
+            {
+                this.list = list.GetEnumerator();
+            }
+
+            public string Current
+            {
+                get
+                {
+                    return this.list.Current;
+                }
+            }
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                return this.list.MoveNext();
+            }
+
+            public void Reset()
+            {
+            }
+        }
+
+        static void DoWork10(IEnumerable<string> data)
+        {
+            var list = data as List<string>;
+            var count = 0;
+            using (var enumerator = new ListEnumeratorButBoxed(list))
+            {
+                while (enumerator.MoveNext())
+                {
+                    var current = enumerator.Current;
+                    ++count;
+                }
+            }
+        }
+
+        static void Test()
+        {
+            var data = new List<string>
+            {
+                "asdf",
+            };
+
+            int iterations = 1000000;
+            var stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork2(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork3(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork4(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork5(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork6(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork7(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork8(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork9(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; ++i)
+            {
+                DoWork9(data);
+            }
+
+            Console.WriteLine(stopwatch.ElapsedTicks);
+            stopwatch = Stopwatch.StartNew();
+
+            Console.ReadLine();
+        }
+
         static void Main(string[] args)
         {
+            Test();
+
             //// TODO change font to 16
             var schema = new Schema(new[]
             {
